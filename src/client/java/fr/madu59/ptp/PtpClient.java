@@ -49,7 +49,7 @@ public class PtpClient implements ClientModInitializer {
 
     private static final Minecraft client = Minecraft.getInstance();
     public static final Logger LOGGER = LogManager.getLogger("ptpClient");
-    private static boolean serverHasMod = false;
+    private static boolean serverHasMod = true;
     private static KeyMapping itemDropKey;
     private static KeyMapping toggleKey;
     private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("ptp", "ptp"));
@@ -59,28 +59,6 @@ public class PtpClient implements ClientModInitializer {
     public void onInitializeClient() {
         PtpConfigScreen.registerCommand();
         registerKeyMappings();
-
-        // Reset handshake state on join
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            serverHasMod = false;
-
-            // Always enabled in singleplayer
-            if (client.hasSingleplayerServer()) {
-                serverHasMod = true;
-                return;
-            }
-
-            // Send handshake to server
-            ClientPlayNetworking.send(new HANDSHAKE_C2SPayload("Check if is installed on server"));
-            LOGGER.info("[PTP] Sending handshake to server...");
-        });
-
-        // Receive handshake reply
-        ClientPlayNetworking.registerGlobalReceiver(HANDSHAKE_S2CPayload.ID,
-            (payload, context) -> {
-                LOGGER.info("[PTP] Received handshake from server!");
-                serverHasMod = true;
-        });
         
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             renderOverlay(context);
